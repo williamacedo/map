@@ -1,0 +1,94 @@
+import React from 'react';
+import { connect } from 'react-redux';
+import ChatItem from '../ChatItem.component';
+
+import firebase from '../../FirebaseConn';
+
+
+class ListChatClienteInteressadoComponent extends React.Component {
+
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      inputMsg: 'novoteste',
+      list:[]
+    }
+
+    this.getChat = this.getChat();
+  }
+
+  getChat() {
+    let chats = [];
+
+    firebase.database().ref('conversas').child(this.props.id).child('mensagens').on('value', (snapshot) => {
+
+      snapshot.forEach((childItem) => {
+        chats.push({
+          key:childItem.key,
+          mensagem:childItem.val().mensagem,
+          remetente: childItem.val().remetente
+        });
+      });        
+        this.setState({list: chats});
+        //alert(JSON.stringify(this.state.list))
+    });      
+  }
+
+  sendMsgChat(user, msg) {
+    let id_user = this.props.id;
+    let chat = firebase.database().ref('conversas');     
+    chat.child(id_user).child('mensagens').push({
+        mensagem: msg,
+        remetente: user.id
+    });
+
+  } 
+
+
+  render() {
+    let user = localStorage.getItem('dados');  
+    user = JSON.parse(user);
+
+    return (
+          <div>
+                {this.state.list.map(chat => {
+                  return(
+                      <ChatItem key={chat.key} id={chat.key} msg={chat.mensagem} to={chat.remetente}> </ChatItem>
+                  );
+                })}
+                <div>
+                  <Button onClick={() => {
+                    this.sendMsgChat(user, this.state.inputMsg);
+                  }}>
+                    Enviar
+                  </Button>  
+                  </div>        
+                </div> 
+    );
+  }
+}
+
+
+// ChatItem
+
+import React, { Component } from 'react';
+import Typography from '@material-ui/core/Typography';
+
+export default class ChatItem extends Component {
+
+	render() {
+		let {
+			id,
+			msg,
+			to
+		} = this.props;
+		return (
+            <Typography color='textSecondary'>
+              {msg}
+            </Typography>			
+		);
+	}
+
+}
+
